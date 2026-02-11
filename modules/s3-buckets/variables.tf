@@ -1,24 +1,41 @@
+variable "region" {
+  description = "AWS region to deploy resources"
+  type        = string
+  default     = "us-east-2"
+}
+
 variable "buckets" {
   description = "Map of bucket configs keyed by logical name"
   type = map(object({
-    bucket_name        = string
-    versioning_enabled = optional(bool, true)
-    force_destroy      = optional(bool, false)
-
-    sse_algorithm      = optional(string, "AES256") # or "aws:kms"
-    kms_key_arn        = optional(string, null)
-
-    block_public_acls       = optional(bool, true)
-    block_public_policy     = optional(bool, true)
-    ignore_public_acls      = optional(bool, true)
-    restrict_public_buckets = optional(bool, true)
+    bucket_name   = string
+    force_destroy = optional(bool, false)
 
     tags = optional(map(string), {})
+
+    # Optional: enable S3 static website hosting for THIS bucket
+    website = optional(object({
+      enabled       = optional(bool, true)
+      index_document = string
+      error_document = optional(string, "error.html")
+
+      # If true, module will make bucket public-read for website content
+      public_read = optional(bool, true)
+
+      # Optional: custom routing rules JSON (advanced)
+      routing_rules_json = optional(string, null)
+    }), null)
+
+    # Public access block defaults (safe). Will be overridden when website.public_read=true
+    public_access_block = optional(object({
+      block_public_acls       = optional(bool, true)
+      block_public_policy     = optional(bool, true)
+      ignore_public_acls      = optional(bool, true)
+      restrict_public_buckets = optional(bool, true)
+    }), {})
   }))
 }
 
 variable "default_tags" {
-  description = "Tags applied to every bucket"
-  type        = map(string)
-  default     = {}
+  type    = map(string)
+  default = {}
 }
